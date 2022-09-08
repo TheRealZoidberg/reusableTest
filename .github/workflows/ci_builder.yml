@@ -3,4 +3,4 @@ on:
   workflow_dispatch:
 jobs:
   HTMLBuilder:
-   uses: therealzoidberg/notebook_ci_template/.github/workflows/ci_builder.yml@main
+   uses: spacetelescope/notebook-ci-actions/.github/workflows/ci_builder.yml@main
