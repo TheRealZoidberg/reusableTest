@@ -4,8 +4,7 @@ name: Build and deploy notebooks
 on: 
   workflow_dispatch:
 
-permissions:
-  pull-requests: write
+permissions: read-all|write-all
   
 jobs:
   validation:
