@@ -9,4 +9,4 @@ permissions:
   
 jobs:
   validation:
-   uses: therealzoidberg/notebook_ci_template/.github/workflows/ci_validation.yml@main
+   uses: therealzoidberg/notebook_ci_template/.github/workflows/ci_builder.yml@main
