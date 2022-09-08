@@ -1,11 +1,6 @@
 name: Build and deploy notebooks
-
-#  Only run this when the master branch changes
 on: 
   workflow_dispatch:
-
-permissions: write-all
-  
 jobs:
-  validation:
+  HTMLBuilder:
    uses: therealzoidberg/notebook_ci_template/.github/workflows/ci_builder.yml@main
