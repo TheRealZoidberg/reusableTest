@@ -25,6 +25,7 @@ jobs:
         echo "matrix=$(jq --compact-output --null-input '$ARGS.positional' --args -- "${array[@]}")" >> $GITHUB_OUTPUT
   notebook-execution:
     needs: gather-notebooks
+    environment: ci_env
     runs-on: ubuntu-latest
     env:
       CASJOBS_PW: ${{ secrets.CASJOBS_PW }}
