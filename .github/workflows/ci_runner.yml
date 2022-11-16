@@ -26,6 +26,9 @@ jobs:
   notebook-execution:
     needs: gather-notebooks
     runs-on: ubuntu-latest
+    env:
+      CASJOBS_PW: ${{ secrets.CASJOBS_PW }}
+      CASJOBS_USERID: ${{ secrets.CASJOBS_USERID }}
     strategy:
         fail-fast: false
         matrix:
