@@ -58,6 +58,8 @@ jobs:
           bandit "${{ matrix.notebooks }}"
       - name: Execute notebooks
         run: |
+          echo ::set-env name=CASJOBS_PW::${{ secrets.CASJOBS_PW }}
+          echo :: set-env name=CASJOBS_USERID::${{ secrets.CASJOBS_USERID }}
           jupyter nbconvert --template classic --to html --execute "${{ matrix.notebooks }}"
       - name: Validate notebooks 
         run: |
