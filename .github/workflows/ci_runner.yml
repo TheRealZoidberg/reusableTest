@@ -2,15 +2,27 @@ on:
   workflow_call:
   
 jobs:
-  validate:
+  gather-notebooks:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        notebooks: [${changed-notebooks}]
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.head_ref }}
+    - uses: actions/checkout@v3
+    ## routine to gather only the changed notebook files and supply them to the matrix
+    - name: changed-files
+      id: get-changed-files
+      uses: tj-actions/changed-files@v34
+      with:
+        separator: ","
+        files: |
+          **/*.ipynb
+    ## convert the list of files to an array and push them into the matrix as a json object      
+    - name: set-matrix
+      id: set-matrix
+      run: |
+        IFS=',' read -r -a array <<< "${{steps.get-changed-files.outputs.all_changed_files}}"
+        echo "{$array}"
+        echo "matrix=$(jq --compact-output --null-input '$ARGS.positional' --args -- "${array[@]}")" >> $GITHUB_OUTPUT
        
     - name: Set up Python 3.8.12
       uses: actions/setup-python@v4 ## needed for caching
@@ -33,15 +45,6 @@ jobs:
         pip install nbconvert
         pip install bandit
         
-    - name: Find changed notebooks
-      run |
-        changed_notebooks=$(git-diff --name-only HEAD~1 HEAD | grep '.ipynb$')
-        if [ -z "$changed_notebooks" ]; then
-          echo "No changed notebooks"
-          exit 0
-        fi
-        echo "$changed_notebooks"
-        
     - name: Security testing with Bandit
       run: | 
         bandit "${{ matrix.notebooks }}"
@@ -55,9 +58,11 @@ jobs:
       run: |
        pytest --nbval "${{ matrix.notebooks }}" 
     - name: Push executed notebooks to gh-storage branch
-      run: |
-        git checkout gh-storage
-        git add "${{ matrix.notebooks }}
-        git commit -m "Executed an validated notebooks"
-        git push origin gh-storage
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: gh-storage
+        force: true
+        files: | 
+          ${{ matrix.notebooks }}
          
