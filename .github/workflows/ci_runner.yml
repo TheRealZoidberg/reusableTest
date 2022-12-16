@@ -23,46 +23,54 @@ jobs:
         IFS=',' read -r -a array <<< "${{steps.get-changed-files.outputs.all_changed_files}}"
         echo "{$array}"
         echo "matrix=$(jq --compact-output --null-input '$ARGS.positional' --args -- "${array[@]}")" >> $GITHUB_OUTPUT
-       
-    - name: Set up Python 3.8.12
-      uses: actions/setup-python@v4 ## needed for caching
-      env:
-        CASJOBS_PW: ${{ secrets.CASJOBS_PW }}
-        CASJOBS_USERID: ${{ secrets.CASJOBS_USERID }}
-      with:
-        python-version: 3.8.12
-        cache: 'pip'
-    - name: Add conda to system path
-      run: |
-        # $CONDA is an environment variable pointing to the root of the miniconda directory
-        echo $CONDA/bin >> $GITHUB_PATH
-    - name: Install dependencies
-      run: |
-        ## Install the local requirements file
-        pip install -r $(dirname "${{ matrix.notebooks }}")/requirements.txt
-        pip install pytest
-        pip install nbval
-        pip install nbconvert
-        pip install bandit
-        
-    - name: Security testing with Bandit
-      run: | 
-        bandit "${{ matrix.notebooks }}"
-    - name: Execute notebooks
-      run: |
-        echo "CASJOBS_PW=${{ secrets.CASJOBS_PW }}" >> $GITHUB_ENV
-        echo "CASJOBS_USERID=${{ secrets.CASJOBS_USERID }}" >> $GITHUB_ENV
-        echo $CASJOBS_USERID
-        jupyter nbconvert --template classic --to html --execute "${{ matrix.notebooks }}"
-    - name: Validate notebooks 
-      run: |
-       pytest --nbval "${{ matrix.notebooks }}" 
-    - name: Push executed notebooks to gh-storage branch
-      uses: ad-m/github-push-action@master
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        branch: gh-storage
-        force: true
-        files: | 
-          ${{ matrix.notebooks }}
-         
+  notebook-execution:
+      needs: gather-notebooks
+      environment: ci_env
+      runs-on: ubuntu-latest
+      strategy:
+          fail-fast: false
+          matrix:
+              notebooks: ${{ fromJson(needs.gather-notebooks.outputs.matrix) }}
+      steps:
+      - name: Set up Python 3.8.12
+        uses: actions/setup-python@v4 ## needed for caching
+        env:
+          CASJOBS_PW: ${{ secrets.CASJOBS_PW }}
+          CASJOBS_USERID: ${{ secrets.CASJOBS_USERID }}
+        with:
+          python-version: 3.8.12
+          cache: 'pip'
+      - name: Add conda to system path
+        run: |
+          # $CONDA is an environment variable pointing to the root of the miniconda directory
+          echo $CONDA/bin >> $GITHUB_PATH
+      - name: Install dependencies
+        run: |
+          ## Install the local requirements file
+          pip install -r $(dirname "${{ matrix.notebooks }}")/requirements.txt
+          pip install pytest
+          pip install nbval
+          pip install nbconvert
+          pip install bandit
+
+      - name: Security testing with Bandit
+        run: | 
+          bandit "${{ matrix.notebooks }}"
+      - name: Execute notebooks
+        run: |
+          echo "CASJOBS_PW=${{ secrets.CASJOBS_PW }}" >> $GITHUB_ENV
+          echo "CASJOBS_USERID=${{ secrets.CASJOBS_USERID }}" >> $GITHUB_ENV
+          echo $CASJOBS_USERID
+          jupyter nbconvert --template classic --to html --execute "${{ matrix.notebooks }}"
+      - name: Validate notebooks 
+        run: |
+         pytest --nbval "${{ matrix.notebooks }}" 
+      - name: Push executed notebooks to gh-storage branch
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: gh-storage
+          force: true
+          files: | 
+            ${{ matrix.notebooks }}
+
