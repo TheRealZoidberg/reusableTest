@@ -2,62 +2,62 @@ on:
   workflow_call:
   
 jobs:
-  notebook-execution:
-    environment: ci_env
+  validate:
     runs-on: ubuntu-latest
     strategy:
-        matrix:
-            notebooks: ${{ steps.gather-notebooks.outputs }}
+      matrix:
+        notebooks: [${changed-notebooks}]
     steps:
-      - uses: actions/checkout@v3  
-      - name: Gather changed notebooks
-        id: gather-notebooks
-        run: |
-          CHANGED_FILES=$(git diff --name-only HEAD~1)
-          IFS=' ' read -r -a CHANGED_FILES_ARRAY <<< "$CHANGEDD_FILES"
-          for file in "$(CHANGED_FILES_ARRAY[@]}"
-          do
-            if [[ $file == *.ipynb ]]; then
-              echo "::set-output name=${file}::1"
-            fi
-          done
-
-      - name: Set up Python 3.8.12
-        uses: actions/setup-python@v4 ## needed for caching
-        env:
-          CASJOBS_PW: ${{ secrets.CASJOBS_PW }}
-          CASJOBS_USERID: ${{ secrets.CASJOBS_USERID }}
+      - uses: actions/checkout@v3
         with:
-          python-version: 3.8.12
-          cache: 'pip'
-      - name: Add conda to system path
-        run: |
-          # $CONDA is an environment variable pointing to the root of the miniconda directory
-          echo $CONDA/bin >> $GITHUB_PATH
-      - name: Install dependencies
-        run: |
-          ## Install the local requirements file
-          pip install -r $(dirname "${{ matrix.notebooks }}")/requirements.txt
-          pip install pytest
-          pip install nbval
-          pip install nbconvert
-          pip install bandit
-      - name: Security testing with Bandit
-        run: | 
-          bandit "${{ matrix.notebooks }}"
-      - name: Execute notebooks
-        run: |
-          echo "CASJOBS_PW=${{ secrets.CASJOBS_PW }}" >> $GITHUB_ENV
-          echo "CASJOBS_USERID=${{ secrets.CASJOBS_USERID }}" >> $GITHUB_ENV
-          echo $CASJOBS_USERID
-          jupyter nbconvert --template classic --to html --execute "${{ matrix.notebooks }}"
-      - name: Validate notebooks 
-        run: |
-         pytest --nbval "${{ matrix.notebooks }}" 
-      - name: Push executed notebooks to gh-storage branch
-        run: |
-          git checkout gh-storage
-          git add "${{ matrix.notebooks }}
-          git commit -m "Executed an validated notebooks"
-          git push origin gh-storage
+          ref: ${{ github.head_ref }}
+       
+    - name: Set up Python 3.8.12
+      uses: actions/setup-python@v4 ## needed for caching
+      env:
+        CASJOBS_PW: ${{ secrets.CASJOBS_PW }}
+        CASJOBS_USERID: ${{ secrets.CASJOBS_USERID }}
+      with:
+        python-version: 3.8.12
+        cache: 'pip'
+    - name: Add conda to system path
+      run: |
+        # $CONDA is an environment variable pointing to the root of the miniconda directory
+        echo $CONDA/bin >> $GITHUB_PATH
+    - name: Install dependencies
+      run: |
+        ## Install the local requirements file
+        pip install -r $(dirname "${{ matrix.notebooks }}")/requirements.txt
+        pip install pytest
+        pip install nbval
+        pip install nbconvert
+        pip install bandit
+        
+    - name: Find changed notebooks
+      run |
+        changed_notebooks=$(git-diff --name-only HEAD~1 HEAD | grep '.ipynb$')
+        if [ -z "$changed_notebooks" ]; then
+          echo "No changed notebooks"
+          exit 0
+        fi
+        echo "$changed_notebooks"
+        
+    - name: Security testing with Bandit
+      run: | 
+        bandit "${{ matrix.notebooks }}"
+    - name: Execute notebooks
+      run: |
+        echo "CASJOBS_PW=${{ secrets.CASJOBS_PW }}" >> $GITHUB_ENV
+        echo "CASJOBS_USERID=${{ secrets.CASJOBS_USERID }}" >> $GITHUB_ENV
+        echo $CASJOBS_USERID
+        jupyter nbconvert --template classic --to html --execute "${{ matrix.notebooks }}"
+    - name: Validate notebooks 
+      run: |
+       pytest --nbval "${{ matrix.notebooks }}" 
+    - name: Push executed notebooks to gh-storage branch
+      run: |
+        git checkout gh-storage
+        git add "${{ matrix.notebooks }}
+        git commit -m "Executed an validated notebooks"
+        git push origin gh-storage
          
