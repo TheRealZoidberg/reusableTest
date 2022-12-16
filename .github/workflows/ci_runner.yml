@@ -10,6 +10,18 @@ jobs:
             notebooks: [ git diff --name-only HEAD HEAD~ | grep '\.ipynb$' ]
     steps:
       - uses: actions/checkout@v3  
+      - name: Gather changed notebooks
+        id: gather-notebooks
+        run: |
+          CHANGED_FILES=$(git diff --name-only HEAD~1)
+          IFS=' ' read -r -a CHANGED_FILES_ARRAY <<< "$CHANGEDD_FILES"
+          for file in "$(CHANGED_FILES_ARRAY[@]}"
+          do
+            if [[ $file == *.ipynb ]]; then
+              echo "::set-output name=${file}::1"
+            fi
+          done
+
       - name: Set up Python 3.8.12
         uses: actions/setup-python@v4 ## needed for caching
         env:
