@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
         matrix:
-            notebooks: [ git diff --name-only HEAD HEAD~ | grep '\.ipynb$' ]
+            notebooks: ${{ steps.gather-notebooks.outputs }}
     steps:
       - uses: actions/checkout@v3  
       - name: Gather changed notebooks
