@@ -2,35 +2,12 @@ on:
   workflow_call:
   
 jobs:
-  gather-notebooks:
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-    steps:
-    - uses: actions/checkout@v3
-    ## routine to gather only the changed notebook files and supply them to the matrix
-    - name: changed-files
-      id: get-changed-files
-      uses: tj-actions/changed-files@v34
-      with:
-        separator: ","
-        files: |
-          **/*.ipynb
-    ## convert the list of files to an array and push them into the matrix as a json object      
-    - name: set-matrix
-      id: set-matrix
-      run: |
-        IFS=',' read -r -a array <<< "${{steps.get-changed-files.outputs.all_changed_files}}"
-        echo "{$array}"
-        echo "matrix=$(jq --compact-output --null-input '$ARGS.positional' --args -- "${array[@]}")" >> $GITHUB_OUTPUT
   notebook-execution:
-    needs: gather-notebooks
     environment: ci_env
     runs-on: ubuntu-latest
     strategy:
-        fail-fast: false
         matrix:
-            notebooks: ${{ fromJson(needs.gather-notebooks.outputs.matrix) }}
+            notebooks: $(git diff --name-only HEAD HEAD~ | grep '.ipynb$')
     steps:
       - uses: actions/checkout@v3  
       - name: Set up Python 3.8.12
@@ -65,3 +42,10 @@ jobs:
       - name: Validate notebooks 
         run: |
          pytest --nbval "${{ matrix.notebooks }}" 
+      - name: Push executed notebooks to gh-storage branch
+        run: |
+          git checkout gh-storage
+          git add "${{ matrix.notebooks }}
+          git commit -m "Executed an validated notebooks"
+          git push origin gh-storage
+         
