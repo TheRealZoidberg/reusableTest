@@ -8,6 +8,10 @@ jobs:
       matrix:
         notebook: [$JUPYTER_NOTEBOOKS]
     steps:
+    - name: check out PR branch
+      run: |
+        git checkout "$GITHUB_HEAD_REF"
+        
     - name: Get list of changed files
       run: | 
         CHANGED_FILES=$(git diff --name-only HEAD HEAD~1)
