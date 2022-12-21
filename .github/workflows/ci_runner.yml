@@ -10,7 +10,7 @@ jobs:
     steps:
     - name: Get list of changed files
       run: | 
-        CHANGED_FILES=$(GIT DIFF --NAME-ONLY HEAD HEAD~1)
+        CHANGED_FILES=$(git diff --name-only HEAD HEAD~1)
         ECHO "CHANGED FILES: $CHANGED_FILES"
         
     - name: Filter to include only Jupyter notebooks
