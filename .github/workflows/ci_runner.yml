@@ -23,8 +23,15 @@ jobs:
         IFS=',' read -r -a array <<< "${{steps.get-changed-files.outputs.all_changed_files}}"
         echo "{$array}"
         echo "matrix=$(jq --compact-output --null-input '$ARGS.positional' --args -- "${array[@]}")" >> $GITHUB_OUTPUT
+
+        
+    - name: Execute changed notebooks
+        strategy:
+        fail-fast: false
+        matrix:
+            notebook: ${{ fromJson(needs.gather-notebooks.outputs.matrix) }}
     - name: Setup Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v3
       with:
         pytho-version: '3.8'
     - name: Nav to notebook directory
@@ -38,8 +45,6 @@ jobs:
         pip install nbconvert
         pip install bandit
         pip install -r requirements.txt
-        
-    - name: Execute changed notebooks
       run: |
         jupyter nbconvert --execute --inplace "${{ matrix.notebook }}" -- output "${{matrix.notebook}}"
         
@@ -49,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        notebook: [$JUPYTER_NOTEBOOKS]
+        otebook: ${{ fromJson(needs.gather-notebooks.outputs.matrix) }}
     steps:
     - name: Nav to notebook directory
       run: |
