@@ -6,20 +6,14 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        notebook: ${{ env.CHANGED_NOTEBOOKS | split(',') }}
+        notebook: ${{ matrix.notebook }}
+
     steps:
     - uses: actions/checkout@v3
-    - name: Get list of changed files
-      run: | 
-        CHANGED_NOTEBOOKS=$(git diff --name-only HEAD HEAD~1 -- '*.ipynb')
-        if [ -n "$CHANGED_NOTEBOOKS" ]; then
-          echo "Changed notebooks: $CHANGED_NOTEBOOKS"
-        else
-          echo "No changed notebooks found"
-        fi
-        echo "::set-env name=CHANGED_NOTEBOOKS::$CHANGED_NOTEBOOKS"
-      
-        
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+        pytho-version: '3.8'
     - name: Nav to notebook directory
       run: |
         cd "$(dirname "${{ matrix.notebook }}")"
@@ -34,7 +28,7 @@ jobs:
         
     - name: Execute changed notebooks
       run: |
-        jupyter nbconvert --execute --inplace "${{ matrix.notebook }}"
+        jupyter nbconvert --execute --inplace "${{ matrix.notebook }}" -- output "${{matrix.notebook}}"
         
     
   validate_notebooks:
