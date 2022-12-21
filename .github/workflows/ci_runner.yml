@@ -23,7 +23,6 @@ jobs:
         IFS=',' read -r -a array <<< "${{steps.get-changed-files.outputs.all_changed_files}}"
         echo "{$array}"
         echo "matrix=$(jq --compact-output --null-input '$ARGS.positional' --args -- "${array[@]}")" >> $GITHUB_OUTPUT
-
   execute-notebooks:      
       runs-on: ubuntu-latest
       strategy:
@@ -37,7 +36,6 @@ jobs:
       - name: Nav to notebook directory
         run: |
           cd "$(dirname "${{ matrix.notebook }}")"
-
       - name: Install dependencies
         run: |
           pip install pytest
@@ -49,17 +47,16 @@ jobs:
           
       - name: validate notebook
         run: | 
-          pytest --nbval "${{ matrix.notebook }}"
-        
-  push_notebooks:
-    runs-on: ubuntu-latest
-    steps:
-    - name: push notebooks
-      run: |
-        git checkout -b gh-storage
-        git add $JUPYTER_NOTEBOOKS
-        git commit -m "Add changed notebooks"
-        git push origin gh-storage
+          pytest --nbval "${{ matrix.notebook }}"     
+ # push_notebooks:
+ #   runs-on: ubuntu-latest
+   #   steps:
+      - name: push notebooks
+        run: |
+          git checkout -b gh-storage
+          git add $JUPYTER_NOTEBOOKS
+          git commit -m "Add changed notebooks"
+          git push origin gh-storage
 
 
 
