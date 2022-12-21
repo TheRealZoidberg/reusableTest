@@ -6,19 +6,19 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        notebook: [$JUPYTER_NOTEBOOKS]
+        notebook: [${{ env.CHANGED_NOTEBOOKS }}]
     steps:
     - uses: actions/checkout@v3
-        
     - name: Get list of changed files
       run: | 
-        CHANGED_FILES=$(git diff --name-only HEAD HEAD~1)
-        ECHO "CHANGED FILES: $CHANGED_FILES"
-        
-    - name: Filter to include only Jupyter notebooks
-      run: |
-        JUPYTER_NOTEBOOKS=$(echo "$CHANGED_FILES" | grep "\.ipynb$")
-        echo "Jupyter notebooks: $JUPYTER_NOTEBOOKS"
+        CHANGED_NOTEBOOKS=$(git diff --name-only HEAD HEAD~1 -- '*.ipynb')
+        if [ -n "$CHANGED_NOTEBOOKS" ]; then
+          echo "Changed notebooks: $CHANGED_NOTEBOOKS"
+        else
+          echo "No changed notebooks found"
+        fi
+        echo "::set-env name=CHANGED_NOTEBOOKS::$CHANGED_NOTEBOOKS"
+      
         
     - name: Nav to notebook directory
       run: |
