@@ -52,7 +52,6 @@ jobs:
           pytest --nbval "${{ matrix.notebook }}"
         
   push_notebooks:
-    needs: [execute-notebooks]
     runs-on: ubuntu-latest
     steps:
     - name: push notebooks
