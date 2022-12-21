@@ -24,56 +24,35 @@ jobs:
         echo "{$array}"
         echo "matrix=$(jq --compact-output --null-input '$ARGS.positional' --args -- "${array[@]}")" >> $GITHUB_OUTPUT
 
-        
-    - name: Execute changed notebooks
-        strategy:
-        fail-fast: false
+  execute-notebooks:      
+      runs-on: ubuntu-latest
+      strategy:
         matrix:
             notebook: ${{ fromJson(needs.gather-notebooks.outputs.matrix) }}
-    - name: Setup Python
-      uses: actions/setup-python@v3
-      with:
-        pytho-version: '3.8'
-    - name: Nav to notebook directory
-      run: |
-        cd "$(dirname "${{ matrix.notebook }}")"
-    
-    - name: Install dependencies
-      run: |
-        pip install pytest
-        pip install nbval
-        pip install nbconvert
-        pip install bandit
-        pip install -r requirements.txt
-      run: |
-        jupyter nbconvert --execute --inplace "${{ matrix.notebook }}" -- output "${{matrix.notebook}}"
-        
-    
-  validate_notebooks:
-    needs: [executed_changed_notebooks]
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        otebook: ${{ fromJson(needs.gather-notebooks.outputs.matrix) }}
-    steps:
-    - name: Nav to notebook directory
-      run: |
-        cd "$(dirname "${{ matrix.notebook }}")"
+      steps:
+      - name: Setup Python
+        uses: actions/setup-python@v3
+        with:
+          pytho-version: '3.8'
+      - name: Nav to notebook directory
+        run: |
+          cd "$(dirname "${{ matrix.notebook }}")"
 
-    - name: Install dependencies
-      run: |
-        pip install pytest
-        pip install nbval
-        pip install nbconvert
-        pip install bandit
-        pip install -r requirements.txt
-        
-    - name: Validate notebooks
-      run: |
-        nbval "${{ matrix.notebook }}"
+      - name: Install dependencies
+        run: |
+          pip install pytest
+          pip install nbval
+          pip install nbconvert
+          pip install bandit
+          pip install -r requirements.txt
+          jupyter nbconvert --execute --inplace "${{ matrix.notebook }}" -- output "${{matrix.notebook}}"
+          
+      - name: validate notebook
+        run: | 
+          pytest --nbval "${{ matrix.notebook }}"
         
   push_notebooks:
-    needs: [executed_changed_notebooks, validate_notebooks]
+    needs: [execute-notebooks]
     runs-on: ubuntu-latest
     steps:
     - name: push notebooks
