@@ -2,11 +2,32 @@ on:
   workflow_call:
   
 jobs:
+  gather-notebooks:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+    - uses: actions/checkout@v3
+    ## routine to gather only the changed notebook files and supply them to the matrix
+    - name: changed-files
+      id: get-changed-files
+      uses: tj-actions/changed-files@v34
+      with:
+        separator: ","
+        files: |
+          **/*.ipynb
+    ## convert the list of files to an array and push them into the matrix as a json object      
+    - name: set-matrix
+      id: set-matrix
+      run: |
+        IFS=',' read -r -a array <<< "${{steps.get-changed-files.outputs.all_changed_files}}"
+        echo "{$array}"
+        echo "matrix=$(jq --compact-output --null-input '$ARGS.positional' --args -- "${array[@]}")" >> $GITHUB_OUTPUT
   execute_notebooks:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        notebook: ${{ toJson(github.event.pull_request.changes) }}
+        notebook: ${{ fromJson(needs.gather-notebooks.outputs.matrix) }}
     name:  Execute notebooks on PR
     steps:
       - name: Checkout repo
