@@ -49,7 +49,7 @@ jobs:
           pip install bandit
       - name: Execute notebook
         run: |
-          jupyter nbconvert --execute --inplace "${{ matrix.notebook }}" -- output "${{matrix.notebook}}"
+          jupyter nbconvert --execute --inplace "${{ matrix.notebooks }}" -- output "${{matrix.notebooks}}"
       - name: Push executed notebook to gh-storage
         if: success()
         uses: ad-m/github-push-action@master
