@@ -39,16 +39,14 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.8
-      - name: Nav to notebook directory
-        run: |
-          cd "$(dirname "${{ matrix.notebook }}")"
       - name: Install dependencies
         run: |
+          ## Install the local requirements file
+          pip install -r $(dirname "${{ matrix.notebooks }}")/requirements.txt
           pip install pytest
           pip install nbval
           pip install nbconvert
           pip install bandit
-          pip install -r requirements.txt
       - name: Execute notebook
         run: |
           jupyter nbconvert --execute --inplace "${{ matrix.notebook }}" -- output "${{matrix.notebook}}"
