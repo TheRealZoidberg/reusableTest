@@ -2,37 +2,19 @@ on:
   workflow_call:
   
 jobs:
-  executed_changed_notebooks:
+  execute_notebooks:
     runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    strategy:
+      matrix:
+        notebook: ${{ toJson(github.event.pull_request.changes) }}
+    name:  Execute notebooks on PR
     steps:
-    - uses: actions/checkout@v3
-    ## routine to gather only the changed notebook files and supply them to the matrix
-    - name: changed-files
-      id: get-changed-files
-      uses: tj-actions/changed-files@v34
-      with:
-        separator: ","
-        files: |
-          **/*.ipynb
-    ## convert the list of files to an array and push them into the matrix as a json object      
-    - name: set-matrix
-      id: set-matrix
-      run: |
-        IFS=',' read -r -a array <<< "${{steps.get-changed-files.outputs.all_changed_files}}"
-        echo "{$array}"
-        echo "matrix=$(jq --compact-output --null-input '$ARGS.positional' --args -- "${array[@]}")" >> $GITHUB_OUTPUT
-  execute-notebooks:      
-      runs-on: ubuntu-latest
-      strategy:
-        matrix:
-            notebook: ${{ fromJson(needs.gather-notebooks.outputs.matrix) }}
-      steps:
-      - name: Setup Python
-        uses: actions/setup-python@v3
+      - name: Checkout repo
+        uses: actions/checkout@v2
+      - name: setup python
+        uses: actions/setup-python@v2
         with:
-          pytho-version: '3.8'
+          python-version: 3.8
       - name: Nav to notebook directory
         run: |
           cd "$(dirname "${{ matrix.notebook }}")"
@@ -43,22 +25,15 @@ jobs:
           pip install nbconvert
           pip install bandit
           pip install -r requirements.txt
-          jupyter nbconvert --execute --inplace "${{ matrix.notebook }}" -- output "${{matrix.notebook}}"
-          
-      - name: validate notebook
-        run: | 
-          pytest --nbval "${{ matrix.notebook }}"     
- # push_notebooks:
- #   runs-on: ubuntu-latest
-   #   steps:
-      - name: push notebooks
+      - name: Execute notebook
         run: |
-          git checkout -b gh-storage
-          git add $JUPYTER_NOTEBOOKS
-          git commit -m "Add changed notebooks"
-          git push origin gh-storage
-
-
-
-
+          jupyter nbconvert --execute --inplace "${{ matrix.notebook }}" -- output "${{matrix.notebook}}"
+      - name: Push executed notebook to gh-storage
+        if: success()
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: gh-storage
+          directory: output
+          force: true
 
