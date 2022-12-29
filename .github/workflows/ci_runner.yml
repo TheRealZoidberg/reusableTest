@@ -58,7 +58,8 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git commit -a -m "Add changes"
           git config pull.rebase false 
-          git pull origin gh-storage --allow-unrelated-histories
+          git merge --ff-only origin/gh-storage
+          #git pull origin gh-storage --allow-unrelated-histories
           
           
       - name: Push executed notebook to gh-storage
