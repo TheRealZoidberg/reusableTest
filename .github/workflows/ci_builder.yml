@@ -39,6 +39,17 @@ jobs:
       run: |
         jupyter-book build .
 
+    - name: Download artifacts and execute
+      uses: actions/download-artifact@v2
+      with:
+        name: notebooks
+    - name: Execute notebooks
+      run: |
+        for f in notebooks/*.ipynb; do
+          jupyter nbconvert --to notebook --execute "$f"
+        done
+      
+      
     # Push the book's HTML to github-pages
     - name: GitHub Pages action
       uses: peaceiris/actions-gh-pages@v3.6.1
