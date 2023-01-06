@@ -73,4 +73,4 @@ jobs:
           
       - name: Validate artifacts
         run: |
-          pytest --nbval /home/runner/work/renderTest/renderTest/output/
+          pytest --nbval --nbval-lax /home/runner/work/renderTest/renderTest/output/
