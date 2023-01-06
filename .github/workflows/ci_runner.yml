@@ -72,6 +72,4 @@ jobs:
           path: "${{ matrix.notebooks }}" 
       - name: Execute notebooks
         run: |
-          for f in notebooks/*.ipynb; do
-            jupyter nbconvert --to notebook --execute "$f"
-          done
+          jupyter nbconvert --execute --to ipynb "${{ matrix.notebooks }}" 
