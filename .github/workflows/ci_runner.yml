@@ -67,7 +67,10 @@ jobs:
           
       - name: Download artifacts and execute
         uses: actions/download-artifact@v2
-
+      - name: List artifacts
+        run: |
+          ls -l /home/runner/work/renderTest/renderTest/output
+          
       - name: Execute notebooks
         run: |
-          jupyter nbconvert --execute --to ipynb "${{ matrix.notebooks }}" 
+          jupyter nbconvert --execute --to ipynb /home/runner/work/renderTest/renderTest/output/*.ipynb
