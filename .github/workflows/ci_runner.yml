@@ -61,7 +61,10 @@ jobs:
           name: output
           path: "${{ matrix.notebooks }}" 
           
-      
+      - name: Clear files
+        run: | 
+          rm "${{ matrix.notebooks }}"
+          
       - name: Download artifacts and execute
         uses: actions/download-artifact@v2
         with:
