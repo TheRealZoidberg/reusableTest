@@ -71,6 +71,6 @@ jobs:
         run: |
           ls -l /home/runner/work/renderTest/renderTest/output
           
-      - name: Execute notebooks
+      - name: Validate artifacts
         run: |
-          jupyter nbconvert --execute --to ipynb /home/runner/work/renderTest/renderTest/output/*.ipynb
+          pytest --nbval /home/runner/work/renderTest/renderTest/output/
