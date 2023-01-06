@@ -54,24 +54,9 @@ jobs:
           jupyter nbconvert --execute --inplace "${{ matrix.notebooks }}" 
           #jupyter nbconvert --execute --inplace "${{ matrix.notebooks }}" -- output "${{matrix.notebooks}}"
           
-      - name: Commit files
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git fetch
-          git add "${{ matrix.notebooks }}" 
-          git commit -a -m "Add changes"
-       #   git config pull.rebase false 
-       #   git merge --ff-only origin/gh-storage
-          #git pull origin gh-storage --allow-unrelated-histories
-          
-          
-      - name: Push executed notebook to gh-storage
-        if: success()
-        uses: ad-m/github-push-action@master
+      ## Store notebooks as artifacts
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: gh-storage
-          force: true
-          
-
+          name: output
+          path: "${{ matrix.notebooks }}" 
