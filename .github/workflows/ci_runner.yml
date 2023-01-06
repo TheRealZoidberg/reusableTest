@@ -65,7 +65,7 @@ jobs:
       - name: Download artifacts and execute
         uses: actions/download-artifact@v2
         with:
-          name: notebooks
+          name: "${{ matrix.notebooks }}" 
       - name: Execute notebooks
         run: |
           for f in notebooks/*.ipynb; do
